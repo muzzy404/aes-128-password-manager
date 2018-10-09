@@ -6,6 +6,8 @@ from tables import S_BOX, REVERSE_S_BOX
 #          [a2, b2, c2, d2],  | 2
 #          [a3, b3, c3, d3],  | 3
 #          [a4, b4, c4, d4]]  | 4 = rows number
+# https://en.wikipedia.org/wiki/Advanced_Encryption_Standard
+# https://habr.com/post/212235/
 
 R = 4    # rows number
 
@@ -37,11 +39,16 @@ def shift_rows(state, reverse=False):
     """
     Transposition step where all rows of the state except first one are shifted cyclically a certain number of steps.
 
-    :param state:
+    :param state: data block to modify
+    :type state: list of lists
     :param reverse:
-    :return:
+    :return: shifted data block
     """
     for i in range(1, R):
         row = state[i]
         state[i] = row[i:] + row[:i-NB] if not reverse else row[-i:] + row[:NB-i]
     return state
+
+
+def mix_columns(state):
+    pass
