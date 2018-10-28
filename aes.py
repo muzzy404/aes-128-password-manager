@@ -1,6 +1,6 @@
 from sys import getsizeof
 
-from tables import S_BOX, REVERSE_S_BOX
+from tables import S_BOX, REVERSE_S_BOX, GF_MATRIX, REVERSE_GF_MATRIX
 
 # state = [[], [], [], []]
 #
@@ -8,7 +8,7 @@ from tables import S_BOX, REVERSE_S_BOX
 #         [[a1, b1, c1, d1],  | 1
 #          [a2, b2, c2, d2],  | 2
 #          [a3, b3, c3, d3],  | 3
-#          [a4, b4, c4, d4]]  | 4 = rows number
+#          [a4, b4, c4, d4]]  | 4 = rows number (R)
 # https://en.wikipedia.org/wiki/Advanced_Encryption_Standard
 # https://habr.com/post/212235/
 
@@ -78,19 +78,23 @@ def gf256_mul(a, b):
 
 def mix_columns(state, reverse=False):
     mul = gf256_mul
-    col = range(R)
+    matrix = GF_MATRIX if not reverse else REVERSE_GF_MATRIX
     for i in range(NB):
-        if not reverse:
-            col[0] = mul(0x02, state[0][i]) ^ mul(0x03, state[1][i]) ^ state[2][i] ^ state[3][i]
-            col[1] = state[0][i] ^ mul(0x02, state[1][i]) ^ mul(0x03, state[2][i]) ^ state[3][i]
-            col[2] = state[0][i] ^ state[1][i] ^ mul(0x02, state[2][i]) ^ mul(0x03, state[3][i])
-            col[3] = mul(0x03, state[0][i]) ^ state[1][i] + state[2][i] ^ mul(0x02, state[3][i])
-        else:
-            col[0] = mul(0x0e, state[0][i]) ^ mul(0x0b, state[1][i]) ^ mul(0x0d, state[2][i]) ^ mul(0x09, state[3][i])
-            col[1] = mul(0x09, state[0][i]) ^ mul(0x0e, state[1][i]) ^ mul(0x0b, state[2][i]) ^ mul(0x0d, state[3][i])
-            col[2] = mul(0x0d, state[0][i]) ^ mul(0x09, state[1][i]) ^ mul(0x0e, state[2][i]) ^ mul(0x0b, state[3][i])
-            col[3] = mul(0x0b, state[0][i]) ^ mul(0x0d, state[1][i]) ^ mul(0x09, state[2][i]) ^ mul(0x0e, state[3][i])
-        for j in range(R):
-            state[j][i] = col[j]
-
+        column = []
+        for row in matrix:
+            cell = mul(row[0], state[0][i])
+            for k in range(1, len(row)):
+                cell ^= mul(row[k], state[k][i])
+            column.append(cell)
+        for k in range(len(column)):
+            state[k][i] = column[k]
     return state
+
+
+# TEST
+# m_1 = [[0xdb, 0x13, 0x53, 0x45], [0xf2, 0x0a, 0x22, 0x5c], [0x01, 0x01, 0x01, 0x01], [0xc6, 0xc6, 0xc6, 0xc6]]
+# print('m_1', m_1)
+# m_2 = mix_columns(m_1)
+# print('m_2', m_2)
+# m_3 = mix_columns(m_2, True)
+# print('m_3', m_3)
