@@ -1,5 +1,5 @@
 import string
-from tables import S_BOX, REVERSE_S_BOX, GF_MATRIX, REVERSE_GF_MATRIX
+from tables import S_BOX, REVERSE_S_BOX, GF_MATRIX, REVERSE_GF_MATRIX, RCON
 
 # state = [[], [], [], []]
 #
@@ -18,7 +18,7 @@ NK = 4   # key length in 32 bit word, NK = 4/6/8 for AES
 NR = 10  # cypher rounds, NR = 10/12/14 for AES
 
 MIN_KEY_LENGTH = 6
-MAX_KEY_LENGTH = 16
+MAX_KEY_LENGTH = R * NK
 
 
 def syb_bytes(state, reverse=False):
@@ -51,7 +51,8 @@ def shift_rows(state, reverse=False):
     """
     for i in range(1, R):
         row = state[i]
-        state[i] = row[i:] + row[:i - NB] if not reverse else row[-i:] + row[:NB - i]
+        # left shift or right shift
+        state[i] = row[i:] + row[:i] if not reverse else row[-i:] + row[:-i]
     return state
 
 
@@ -94,13 +95,14 @@ def mix_columns(state, reverse=False):
 
 
 def key_expansion(key):
-    if MIN_KEY_LENGTH > len(key) > MAX_KEY_LENGTH:
-        raise Exception('Key length is {}. '
-                        'Required key length is {} or less symbols'.format(len(key), MAX_KEY_LENGTH))
+    if not (MIN_KEY_LENGTH <= len(key) <= MAX_KEY_LENGTH):
+        msg = 'Key length is {}. Required key length is ' \
+              '{}-{} symbols'.format(len(key), MIN_KEY_LENGTH, MAX_KEY_LENGTH)
+        raise Exception(msg)
 
     valid_symbols = list(string.punctuation + string.ascii_letters) + [str(num) for num in range(10)]
     if any(symbol not in valid_symbols for symbol in key):
-        raise Exception('Key include invalid symbols.')
+        raise Exception('Key includes invalid symbols.')
 
     if len(key) < R * NK:
         key += chr(0x01) * (R * NK - len(key))
@@ -111,11 +113,37 @@ def key_expansion(key):
         for column in range(NK):
             key_schedule[row].append(key_symbols[row + R * column])
 
-    # TODO: WIP
+    # by NB columns for each of NR + 1 rounds
+    for i in range(NK, NB * (NR + 1)):
+        if i % NK == 0:  # multiple of NB
+            # left shift for previous
+            column = [key_schedule[row][i - 1] for row in range(R)]
+            column = column[1:] + column[:1]
+            # replace elements according S_BOX
+            for j in range(len(column)):
+                row = column[j] // 0x10
+                col = column[j] % 0x10
+                column[j] = S_BOX[row][col]
+            for row in range(R):
+                a = key_schedule[row][i - NK]
+                b = column[row]
+                c = RCON[row][i/NK - 1]
+                key_schedule[row].append(a ^ b ^ c)
+        else:
+            for row in range(R):
+                a = key_schedule[row][i - NK]
+                b = key_schedule[row][i - 1]
+                key_schedule[row].append(a ^ b)
+    return key_schedule
 
 
-# TEST
-# m_1 = [[0xdb, 0x13, 0x53, 0x45], [0xf2, 0x0a, 0x22, 0x5c], [0x01, 0x01, 0x01, 0x01], [0xc6, 0xc6, 0xc6, 0xc6]]
+# TEST key_expansion
+# s = key_expansion('test12345')
+# for row in s:
+#     print(len(row), row)
+
+# TEST mix_columns
+# m_1 = [[0xff, 0x13, 0x53, 0x45], [0xf2, 0xff, 0xff, 0x5c], [0x01, 0x01, 0x01, 0x01], [0xc6, 0xc6, 0xc6, 0xc6]]
 # print('m_1', m_1)
 # m_2 = mix_columns(m_1)
 # print('m_2', m_2)
