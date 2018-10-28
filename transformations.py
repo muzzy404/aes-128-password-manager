@@ -21,7 +21,7 @@ MIN_KEY_LENGTH = 6
 MAX_KEY_LENGTH = R * NK
 
 
-def syb_bytes(state, reverse=False):
+def sub_bytes(state, reverse=False):
     """
     Non-linear substitution step where each byte is replaced with another according to a lookup table.
 
