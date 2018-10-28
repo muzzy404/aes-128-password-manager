@@ -1,5 +1,4 @@
-from sys import getsizeof
-
+import string
 from tables import S_BOX, REVERSE_S_BOX, GF_MATRIX, REVERSE_GF_MATRIX
 
 # state = [[], [], [], []]
@@ -12,11 +11,14 @@ from tables import S_BOX, REVERSE_S_BOX, GF_MATRIX, REVERSE_GF_MATRIX
 # https://en.wikipedia.org/wiki/Advanced_Encryption_Standard
 # https://habr.com/post/212235/
 
-R = 4  # rows number
+R = 4    # rows number
 
-NB = 4  # columns number (number of 32 bit words), NB = 4 for AES
-NK = 4  # key length in 32 bit word, NK = 4/6/8 for AES
+NB = 4   # columns number (number of 32 bit words), NB = 4 for AES
+NK = 4   # key length in 32 bit word, NK = 4/6/8 for AES
 NR = 10  # cypher rounds, NR = 10/12/14 for AES
+
+MIN_KEY_LENGTH = 6
+MAX_KEY_LENGTH = 16
 
 
 def syb_bytes(state, reverse=False):
@@ -83,12 +85,33 @@ def mix_columns(state, reverse=False):
         column = []
         for row in matrix:
             cell = mul(row[0], state[0][i])
-            for k in range(1, len(row)):
-                cell ^= mul(row[k], state[k][i])
+            for j in range(1, len(row)):
+                cell ^= mul(row[j], state[j][i])
             column.append(cell)
-        for k in range(len(column)):
-            state[k][i] = column[k]
+        for j in range(len(column)):
+            state[j][i] = column[j]
     return state
+
+
+def key_expansion(key):
+    if MIN_KEY_LENGTH > len(key) > MAX_KEY_LENGTH:
+        raise Exception('Key length is {}. '
+                        'Required key length is {} or less symbols'.format(len(key), MAX_KEY_LENGTH))
+
+    valid_symbols = list(string.punctuation + string.ascii_letters) + [str(num) for num in range(10)]
+    if any(symbol not in valid_symbols for symbol in key):
+        raise Exception('Key include invalid symbols.')
+
+    if len(key) < R * NK:
+        key += chr(0x01) * (R * NK - len(key))
+    key_symbols = [ord(symbol) for symbol in key]
+
+    key_schedule = [[] for i in range(R)]
+    for row in range(R):
+        for column in range(NK):
+            key_schedule[row].append(key_symbols[row + R * column])
+
+    # TODO: WIP
 
 
 # TEST
