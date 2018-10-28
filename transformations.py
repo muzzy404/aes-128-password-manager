@@ -19,6 +19,8 @@ NR = 10  # cypher rounds, NR = 10/12/14 for AES
 
 MIN_KEY_LENGTH = 6
 MAX_KEY_LENGTH = R * NK
+VALID_SYMBOLS = list(string.printable)
+EMPTY_SYMBOL_CODE = 0x01
 
 
 def sub_bytes(state, reverse=False):
@@ -115,12 +117,11 @@ def key_expansion(key):
               '{}-{} symbols'.format(len(key), MIN_KEY_LENGTH, MAX_KEY_LENGTH)
         raise Exception(msg)
 
-    valid_symbols = list(string.punctuation + string.ascii_letters) + [str(num) for num in range(10)]
-    if any(symbol not in valid_symbols for symbol in key):
+    if any(symbol not in VALID_SYMBOLS for symbol in key):
         raise Exception('Key includes invalid symbols.')
 
     if len(key) < R * NK:
-        key += chr(0x01) * (R * NK - len(key))
+        key += chr(EMPTY_SYMBOL_CODE) * (R * NK - len(key))
     key_symbols = [ord(symbol) for symbol in key]
 
     key_schedule = [[] for i in range(R)]

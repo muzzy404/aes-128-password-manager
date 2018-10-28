@@ -66,9 +66,33 @@ def decrypt(data, key):
     return decrypted
 
 
-m_1 = [11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44]
-print('m_1', m_1)
-m_2 = encrypt(m_1, 'test12345')
-print('m_2', m_2)
-m_3 = decrypt(m_2, 'test12345')
-print('m_3', m_3)
+def message_to_blocks(message, check_for_invalid=True):
+    block_size = aes.R * aes.NB
+
+    blocks = []
+    block = []
+    for symbol in message:
+        if check_for_invalid:
+            if symbol not in aes.VALID_SYMBOLS:
+                raise Exception('Message includes unsupported symbol "{}".'.format(symbol))
+        block.append(ord(symbol))
+        if len(block) == block_size:
+            blocks.append(block)
+            block = []
+
+    if len(block) < block_size:
+        block.extend([aes.EMPTY_SYMBOL_CODE for i in range(len(block), block_size)])
+    blocks.append(block)
+    return blocks
+
+
+def blocks_to_message(blocks):
+    blocks[-1] = filter(lambda s: s != aes.EMPTY_SYMBOL_CODE, blocks[-1])
+    message = ''
+    for block in blocks:
+        for symbol in block:
+            message += chr(symbol)
+    return message
+
+
+
