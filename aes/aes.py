@@ -1,4 +1,4 @@
-import transformations as aes
+import aes.transformations as aes
 
 
 def get_state_from_data(data):
@@ -87,7 +87,7 @@ def message_to_blocks(message, check_for_invalid=True):
 
 
 def blocks_to_message(blocks):
-    blocks[-1] = filter(lambda s: s != aes.EMPTY_SYMBOL_CODE, blocks[-1])
+    blocks[-1] = list(filter(lambda s: s != aes.EMPTY_SYMBOL_CODE, blocks[-1]))
     message = ''
     for block in blocks:
         for symbol in block:

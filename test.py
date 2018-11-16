@@ -1,4 +1,4 @@
-import aes
+from aes import aes
 
 if __name__ == '__main__':
     message = "The Advanced Encryption Standard (AES), also known by its original name Rijndael\n" \

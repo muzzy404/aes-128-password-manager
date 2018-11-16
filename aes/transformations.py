@@ -1,5 +1,5 @@
 import string
-from tables import S_BOX, REVERSE_S_BOX, GF_MATRIX, REVERSE_GF_MATRIX, RCON
+from aes.tables import S_BOX, REVERSE_S_BOX, GF_MATRIX, REVERSE_GF_MATRIX, RCON
 
 # state = [[], [], [], []]
 #
@@ -143,7 +143,7 @@ def key_expansion(key):
             for row in range(R):
                 a = key_schedule[row][i - NK]
                 b = column[row]
-                c = RCON[row][i/NK - 1]
+                c = RCON[row][i//NK - 1]
                 key_schedule[row].append(a ^ b ^ c)
         else:
             for row in range(R):
