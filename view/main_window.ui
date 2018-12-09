@@ -46,7 +46,7 @@
       </column>
       <column>
        <property name="text">
-        <string>URL</string>
+        <string>Type</string>
        </property>
       </column>
      </widget>
@@ -104,9 +104,9 @@
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="QLabel" name="label_url">
+       <widget class="QLabel" name="label_type">
         <property name="text">
-         <string>URL</string>
+         <string>Type</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -123,7 +123,7 @@
        <widget class="QLineEdit" name="input_password"/>
       </item>
       <item row="3" column="2" colspan="2">
-       <widget class="QLineEdit" name="input_url"/>
+       <widget class="QLineEdit" name="input_type"/>
       </item>
       <item row="5" column="3">
        <widget class="QPushButton" name="button_delete">
