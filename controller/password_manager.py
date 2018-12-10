@@ -1,9 +1,11 @@
 """ Password Manager main window module. """
+import os
+
 import pyperclip
 from threading import Thread
 from time import sleep
 
-from PyQt5 import uic
+from PyQt5 import uic, QtGui
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QHeaderView
@@ -30,6 +32,8 @@ class PasswordManager(QMainWindow):
         """
         Method for UI initialization.
         """
+        self.setWindowIcon(QtGui.QIcon('./controller/key_icon.png'))
+
         self.input_password.setEchoMode(QLineEdit.Password)
         self.table_passwords.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
