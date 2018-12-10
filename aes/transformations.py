@@ -104,6 +104,19 @@ def mix_columns(state, reverse=False):
     return state
 
 
+def apply_key_constraints(key):
+    """
+    Function to check key for algorithm constrains.
+
+    :param key: key to check
+    :type key: str
+    """
+    if not (MIN_KEY_LENGTH <= len(key) <= MAX_KEY_LENGTH):
+        msg = 'Key length is {}. Required key length is ' \
+              '{}-{} symbols'.format(len(key), MIN_KEY_LENGTH, MAX_KEY_LENGTH)
+        raise ValueError(msg)
+
+
 def key_expansion(key):
     """
     Generation of round keys.
@@ -112,11 +125,7 @@ def key_expansion(key):
     :type key: str
     :return: key schedule - round keys
     """
-    if not (MIN_KEY_LENGTH <= len(key) <= MAX_KEY_LENGTH):
-        msg = 'Key length is {}. Required key length is ' \
-              '{}-{} symbols'.format(len(key), MIN_KEY_LENGTH, MAX_KEY_LENGTH)
-        raise Exception(msg)
-
+    apply_key_constraints(key)
     if any(symbol not in VALID_SYMBOLS for symbol in key):
         raise Exception('Key includes invalid symbols.')
 

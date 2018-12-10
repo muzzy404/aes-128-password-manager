@@ -11,8 +11,10 @@ from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QHeaderView
 from PyQt5.QtWidgets import QTableWidgetItem
+from PyQt5.QtWidgets import QInputDialog
 
 from aes import aes
+from aes.transformations import apply_key_constraints as aes_password_constraints
 from controller.alerts import show_info_window, show_confirmation_window
 
 
@@ -20,15 +22,44 @@ class PasswordManager(QMainWindow):
     """
     PasswordManager main window.
     """
+    def closeEvent(self, *args, **kwargs):
+        super().closeEvent(*args, **kwargs)
+        self.database.save_data(self.records)
+
     def __init__(self):
         """
         PasswordManager init function.
         """
         super().__init__()
         uic.loadUi('./view/main_window.ui', self)
-        self.records = []
         self.clipboard_free = True
+        self.database, self.records = self.open_database()
         self.init_ui()
+
+    def open_database(self):
+        """
+        Method to open existing database or create new.
+
+        :return: database file and records list
+        :rtype: tuple
+        """
+        db_name, ok = QInputDialog.getText(self, 'Database name', 'Name:')
+        if not ok:
+            raise RuntimeError
+
+        while True:
+            password, ok = QInputDialog.getText(self, '"{}" database password'.format(db_name), 'Password:',
+                                                QLineEdit.Password)
+            if ok:
+                try:
+                    database = PasswordsFile(password=password, file_name=db_name, pwd='./db/')
+                    records = database.load_data()
+                    return database, records
+                except Exception as error:
+                    show_info_window('Incorrect password', 'Please try another password.', details=str(error))
+                    continue
+            else:
+                raise RuntimeError
 
     def init_ui(self):
         """
@@ -47,17 +78,20 @@ class PasswordManager(QMainWindow):
         self.button_copy.clicked.connect(lambda: self.copy_button_click_listener())
         self.button_delete.clicked.connect(lambda: self.delete_button_click_listener())
 
-        self.records.extend(self.__get_test_records())
         self.insert_records_to_table()
 
     def add_button_click_listener(self):
         """
         Add button click listener.
         """
-        record = Record(title=self.input_title.text(),
-                        username=self.input_username.text(),
-                        password=self.input_password.text(),
-                        destination=self.input_type.text())
+        try:
+            record = Record(title=self.input_title.text(),
+                            username=self.input_username.text(),
+                            password=self.input_password.text(),
+                            destination=self.input_type.text())
+        except ValueError:
+            show_info_window('Some fields do not contain data', 'Please fill all fields to add new record.')
+            return
         self.clear_all_inputs()
         self.records.append(record)
         self.insert_record_to_table(record)
@@ -95,7 +129,7 @@ class PasswordManager(QMainWindow):
 
         record = self.records[index]
         if show_confirmation_window('Confirm record deleting',
-                                    'Do you what to delete "{}" record'.format(record.title)):
+                                    'Record "{}" will be deleted. Press OK to continue.'.format(record.title)):
             del self.records[index]
             self.clear_table()
             self.insert_records_to_table()
@@ -247,6 +281,8 @@ class Record:
         :param destination: type (url, ssh, etc.)
         :type destination: str
         """
+        if any(len(item) == 0 for item in [title, username, password, destination]):
+            raise ValueError('record init got empty strings')
         self.title = title
         self.username = username
         self.password = password
@@ -277,6 +313,7 @@ class PasswordsFile:
         :param pwd: path to file
         :type pwd: str
         """
+        aes_password_constraints(password)
         self.db_file = pwd + (file_name if file_name else self.__FILE_NAME)
         self.password = password
 
@@ -300,6 +337,9 @@ class PasswordsFile:
             decrypted_string = aes.blocks_to_message(decrypted_blocks)
             items = decrypted_string.split(',')[:-1]
 
+            if len(raw_data) > 0 and len(items) == 0:
+                raise PermissionError('access to db denied')
+
             records = []
             row = []
             for item in items:
@@ -319,8 +359,9 @@ class PasswordsFile:
         :return:
         """
         # delete database file if no records
-        if len(records) == 0 and Path(self.db_file).exists():
-            os.remove(self.db_file)
+        if len(records) == 0:
+            if Path(self.db_file).exists():
+                os.remove(self.db_file)
             return
 
         data = ''
