@@ -87,6 +87,7 @@ def gf256_mul(a, b):
 def mix_columns(state, reverse=False):
     """
     Mix columns function. Transformation in GF(256) Galua filed.
+
     :param state: data block to modify
     :param reverse: direction of transformation
     :return: result of transformation for state
