@@ -1,3 +1,4 @@
+""" Main module to run application. """
 import sys
 from PyQt5.QtWidgets import QApplication
 from controller.password_manager import PasswordManager

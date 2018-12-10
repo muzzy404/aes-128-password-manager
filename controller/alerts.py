@@ -1,4 +1,4 @@
-""" Module with functions to show different alerts. """
+""" Module with functions to show different QT alerts. """
 from PyQt5.QtWidgets import QMessageBox
 
 

@@ -1,3 +1,4 @@
+""" Module with simple AES-128 test. """
 from aes import aes
 
 if __name__ == '__main__':

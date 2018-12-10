@@ -1,4 +1,4 @@
-""" Password Manager main window module. """
+""" Password Manager main QT window module. """
 import os
 from pathlib import Path
 

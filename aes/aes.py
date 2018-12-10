@@ -1,7 +1,16 @@
+""" Module with main AES-128 functions. """
 import aes.transformations as aes
 
 
 def get_state_from_data(data):
+    """
+    Function to get state array from ints list.
+
+    :param data: data to transform to state
+    :type data: list of ints
+    :return: state
+    :rtype: list
+    """
     state = [[] for i in range(aes.R)]
     for row in range(aes.R):
         for column in range(aes.NB):
@@ -10,6 +19,14 @@ def get_state_from_data(data):
 
 
 def get_data_from_state(state):
+    """
+    Function to get ints list from state array.
+
+    :param state: state to transform to list
+    :type state: list of lists
+    :return: data list
+    :rtype: list of ints
+    """
     data = []
     for column in range(aes.NB):
         for row in range(aes.R):
@@ -22,7 +39,7 @@ def encrypt(data, key):
     Encryption function.
 
     :param data: data to encrypt
-    :type data: list of int
+    :type data: list of ints
     :param key: master password
     :type key: str
     :return: encrypted data
@@ -48,6 +65,15 @@ def encrypt(data, key):
 
 
 def decrypt(data, key):
+    """
+    Decryption function.
+
+    :param data: data to decrypt
+    :type data: list of ints
+    :param key: master password
+    :type key: str
+    :return: decrypted data
+    """
     state = get_state_from_data(data)
     key_schedule = aes.key_expansion(key)
     state = aes.add_round_key(state, key_schedule, aes.NR)
@@ -67,6 +93,16 @@ def decrypt(data, key):
 
 
 def message_to_blocks(message, check_for_invalid=True):
+    """
+    Function to perform message as blocks set.
+
+    :param message: message to perform
+    :type message: str
+    :param check_for_invalid: checking for invalid symbols in message
+    :type check_for_invalid: bool
+    :return: blocks set
+    :rtype: list of lists
+    """
     block_size = aes.R * aes.NB
 
     blocks = []
@@ -87,6 +123,14 @@ def message_to_blocks(message, check_for_invalid=True):
 
 
 def blocks_to_message(blocks):
+    """
+    Function to perform set of blocks as message.
+
+    :param blocks: blocks set
+    :type blocks: list of lists
+    :return: message
+    :rtype: str
+    """
     blocks[-1] = list(filter(lambda s: s != aes.EMPTY_SYMBOL_CODE, blocks[-1]))
     message = ''
     for block in blocks:
@@ -96,6 +140,14 @@ def blocks_to_message(blocks):
 
 
 def message_to_bytes(encrypted_string):
+    """
+    Function to perform message as a set of ints (bytes).
+
+    :param encrypted_string: encrypted string
+    :type encrypted_string: str
+    :return: bytes
+    :rtype: list of lists
+    """
     result = []
     row = []
     for symbol in encrypted_string:
@@ -104,5 +156,3 @@ def message_to_bytes(encrypted_string):
             result.append(row)
             row = []
     return result
-
-

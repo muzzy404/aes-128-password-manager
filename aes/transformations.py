@@ -1,3 +1,4 @@
+""" Module with all AES-128 states transformations. """
 import string
 from aes.tables import S_BOX, REVERSE_S_BOX, GF_MATRIX, REVERSE_GF_MATRIX, RCON
 
