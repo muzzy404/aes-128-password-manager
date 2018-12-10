@@ -261,35 +261,78 @@ class Record:
 
 
 class PasswordsFile:
-    def __init__(self, password='testtest', file_name='passwords', pwd='../db/'):
-        self.db_file = pwd + file_name
+    __FILE_NAME = 'passwords'
+
+    def __init__(self, password='testtest', file_name=None, pwd='../db/'):
+        self.db_file = pwd + (file_name if file_name else self.__FILE_NAME)
         self.password = password
 
-    def load_data(self):
+    def load_data(self, given_data):
         if Path(self.db_file).exists():
-            print('load_data')
-            with open(self.db_file, encoding="utf8") as f:
-                raw_data = f.read()
-                print(raw_data)
-                encrypted_blocks = aes.message_to_bytes(raw_data)
-                decrypted_blocks = []
-                for block in encrypted_blocks:
-                    print(block)
-                    decrypted_blocks.append(aes.decrypt(block, self.password))
-                decrypted_string = aes.blocks_to_message(decrypted_blocks)
+            with open(self.db_file, 'r', encoding="utf8") as f:
+                raw_data = f.read()  # given_data
 
-                records = []
-                rows = decrypted_string.split('\n')
-                for row in rows:
-                    items = row.split(',')
-                    record = Record(title=items[0], username=items[1],
-                                    password=items[2], destination=items[3])
-                    records.append(record)
-                return records
+                for i in range(len(given_data)):
+                    if raw_data[i] != given_data[i]:
+                        print('{}: "{}" - "{}"'.format(i, repr(raw_data[i]), repr(given_data[i])))
+
+                print(len(raw_data), len(given_data))
+                if raw_data == given_data:
+                    print('==')
+                else:
+                    print('!=')
+            f.close()
+
+            encrypted_blocks = aes.message_to_bytes(raw_data)
+            decrypted_blocks = []
+            for block in encrypted_blocks:
+                decrypted_blocks.append(aes.decrypt(block, self.password))
+            decrypted_string = aes.blocks_to_message(decrypted_blocks)
+
+            records = []
+            items = decrypted_string.split(',')[:-1]
+
+            row = []
+            for item in items:
+                row.append(item)
+                if len(row) == 4:
+                    records.append(Record(title=row[0], username=row[1], password=row[2], destination=row[3]))
+                    row = []
+
+            return records
         else:
             return []
 
+    def save_data(self, records):
+        data = ''
+        for record in records:
+            data += '{title},{name},{password},{type},'.format(title=record.title,
+                                                               name=record.username,
+                                                               password=record.password,
+                                                               type=record.destination)
+        blocks = aes.message_to_blocks(data)
+        encrypted_blocks = []
+        for block in blocks:
+            encrypted_blocks.append(aes.encrypt(block, self.password))
+        encrypted = aes.blocks_to_message(encrypted_blocks)
 
+        with open(self.db_file, 'wt', encoding="utf8") as f:
+            f.write(encrypted)
+        f.close()
+
+        return encrypted
+
+
+# tets
 passwords_file = PasswordsFile()
-data = passwords_file.load_data()
-print(data)
+en = passwords_file.save_data([Record('11__1111_11', 'name1', 'password1', 'type1'),
+                               Record('title2', 'name2', 'password2', 'type2'),
+                               Record('lafffffff__fffffla', 't', 'aaa', '111'),
+                               Record('laffff****ff_fffffffla', 't', 'aaa', '111'),
+                               Record('123!*123', '+__$$$$#%#@%#@t', 'aaa', '111'),
+                               Record('laffffffff*fffffla', 't', 'aaa', '111'),
+                               Record('laffffffff*fffffla', 't', 'aaa', '111'),
+                               Record('title3', '567567567', 'password3', 'typetype3'),])
+d = passwords_file.load_data(en)
+for i in d:
+    print(i)
