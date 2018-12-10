@@ -1,5 +1,6 @@
 """ Password Manager main window module. """
 import os
+from pathlib import Path
 
 import pyperclip
 from threading import Thread
@@ -11,6 +12,7 @@ from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QHeaderView
 from PyQt5.QtWidgets import QTableWidgetItem
 
+from aes import aes
 from controller.alerts import show_info_window, show_confirmation_window
 
 
@@ -256,3 +258,44 @@ class Record:
         rec += 'password: ' + self.password + ', '
         rec += 'destination: ' + self.destination
         return rec
+
+
+class PasswordsFile:
+    def __init__(self, password='testtest', file_name='passwords', pwd='../db/'):
+        self.db_file = pwd + file_name
+        self.password = password
+
+    def load_data(self):
+        if Path(self.db_file).exists():
+            print('load_data')
+            with open(self.db_file, encoding="utf8") as f:
+                raw_data = f.read()
+                print(raw_data)
+                encrypted_blocks = aes.message_to_bytes(raw_data)
+                decrypted_blocks = []
+                for block in encrypted_blocks:
+                    print(block)
+                    decrypted_blocks.append(aes.decrypt(block, self.password))
+                decrypted_string = aes.blocks_to_message(decrypted_blocks)
+                # TODO: parse and return list
+                return decrypted_string
+        else:
+            return []
+
+
+passwords_file = PasswordsFile()
+data = passwords_file.load_data()
+print(data)
+
+# test_data = 't1itle1,name1,password1,type1\ntitle2,name2,password2,type2\ntitle3,name3,password3,type3'
+# blocks = aes.message_to_blocks(test_data)
+# encrypted = []
+# for block in blocks:
+#     encrypted.append(aes.encrypt(block, 'testtest'))
+# encrypted_string = aes.blocks_to_message(encrypted)
+#
+# encrypted_from_str = aes.message_to_bytes(encrypted_string)
+#
+# print()
+# for block in encrypted_from_str:
+#     print(block)

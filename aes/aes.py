@@ -95,4 +95,14 @@ def blocks_to_message(blocks):
     return message
 
 
+def message_to_bytes(encrypted_string):
+    result = []
+    row = []
+    for symbol in encrypted_string:
+        row.append(ord(symbol))
+        if len(row) == aes.R * aes.NB:
+            result.append(row)
+            row = []
+    return result
+
 
