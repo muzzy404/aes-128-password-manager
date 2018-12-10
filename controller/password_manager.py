@@ -277,8 +277,15 @@ class PasswordsFile:
                     print(block)
                     decrypted_blocks.append(aes.decrypt(block, self.password))
                 decrypted_string = aes.blocks_to_message(decrypted_blocks)
-                # TODO: parse and return list
-                return decrypted_string
+
+                records = []
+                rows = decrypted_string.split('\n')
+                for row in rows:
+                    items = row.split(',')
+                    record = Record(title=items[0], username=items[1],
+                                    password=items[2], destination=items[3])
+                    records.append(record)
+                return records
         else:
             return []
 
@@ -286,16 +293,3 @@ class PasswordsFile:
 passwords_file = PasswordsFile()
 data = passwords_file.load_data()
 print(data)
-
-# test_data = 't1itle1,name1,password1,type1\ntitle2,name2,password2,type2\ntitle3,name3,password3,type3'
-# blocks = aes.message_to_blocks(test_data)
-# encrypted = []
-# for block in blocks:
-#     encrypted.append(aes.encrypt(block, 'testtest'))
-# encrypted_string = aes.blocks_to_message(encrypted)
-#
-# encrypted_from_str = aes.message_to_bytes(encrypted_string)
-#
-# print()
-# for block in encrypted_from_str:
-#     print(block)
