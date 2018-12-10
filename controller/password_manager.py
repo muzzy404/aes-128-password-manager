@@ -261,26 +261,36 @@ class Record:
 
 
 class PasswordsFile:
+    """
+    PasswordsFile class to work with password manager file.
+    """
     __FILE_NAME = 'passwords'
 
-    def __init__(self, password='testtest', file_name=None, pwd='../db/'):
+    def __init__(self, password, file_name=None, pwd='../db/'):
+        """
+        PasswordsFile initialization.
+
+        :param password: database password
+        :type password: str
+        :param file_name: database name
+        :type file_name: str
+        :param pwd: path to file
+        :type pwd: str
+        """
         self.db_file = pwd + (file_name if file_name else self.__FILE_NAME)
         self.password = password
 
-    def load_data(self, given_data):
+    def load_data(self):
+        """
+        Method to load data from encrypted file.
+
+        :return: list of records from database file
+        :rtype: list
+        """
         if Path(self.db_file).exists():
-            with open(self.db_file, 'r', encoding="utf8") as f:
-                raw_data = f.read()  # given_data
-
-                for i in range(len(given_data)):
-                    if raw_data[i] != given_data[i]:
-                        print('{}: "{}" - "{}"'.format(i, repr(raw_data[i]), repr(given_data[i])))
-
-                print(len(raw_data), len(given_data))
-                if raw_data == given_data:
-                    print('==')
-                else:
-                    print('!=')
+            with open(self.db_file, 'rb') as f:
+                bytes_data = f.read()
+                raw_data = bytes_data.decode()
             f.close()
 
             encrypted_blocks = aes.message_to_bytes(raw_data)
@@ -288,22 +298,31 @@ class PasswordsFile:
             for block in encrypted_blocks:
                 decrypted_blocks.append(aes.decrypt(block, self.password))
             decrypted_string = aes.blocks_to_message(decrypted_blocks)
-
-            records = []
             items = decrypted_string.split(',')[:-1]
 
+            records = []
             row = []
             for item in items:
                 row.append(item)
                 if len(row) == 4:
                     records.append(Record(title=row[0], username=row[1], password=row[2], destination=row[3]))
                     row = []
-
             return records
         else:
             return []
 
     def save_data(self, records):
+        """
+        Method to encrypt and save encrypted data to file.
+
+        :param records:
+        :return:
+        """
+        # delete database file if no records
+        if len(records) == 0 and Path(self.db_file).exists():
+            os.remove(self.db_file)
+            return
+
         data = ''
         for record in records:
             data += '{title},{name},{password},{type},'.format(title=record.title,
@@ -316,23 +335,7 @@ class PasswordsFile:
             encrypted_blocks.append(aes.encrypt(block, self.password))
         encrypted = aes.blocks_to_message(encrypted_blocks)
 
-        with open(self.db_file, 'wt', encoding="utf8") as f:
-            f.write(encrypted)
+        with open(self.db_file, 'wb') as f:
+            bytes_data = encrypted.encode()
+            f.write(bytes_data)
         f.close()
-
-        return encrypted
-
-
-# tets
-passwords_file = PasswordsFile()
-en = passwords_file.save_data([Record('11__1111_11', 'name1', 'password1', 'type1'),
-                               Record('title2', 'name2', 'password2', 'type2'),
-                               Record('lafffffff__fffffla', 't', 'aaa', '111'),
-                               Record('laffff****ff_fffffffla', 't', 'aaa', '111'),
-                               Record('123!*123', '+__$$$$#%#@%#@t', 'aaa', '111'),
-                               Record('laffffffff*fffffla', 't', 'aaa', '111'),
-                               Record('laffffffff*fffffla', 't', 'aaa', '111'),
-                               Record('title3', '567567567', 'password3', 'typetype3'),])
-d = passwords_file.load_data(en)
-for i in d:
-    print(i)
