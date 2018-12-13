@@ -41,4 +41,4 @@ def show_confirmation_window(title, information):
     msg.setText(title)
     msg.setInformativeText(information)
     msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-    return True if msg.exec_() == QMessageBox.Ok else False
+    return msg.exec_() == QMessageBox.Ok
