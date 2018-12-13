@@ -337,8 +337,11 @@ class PasswordsFile:
             decrypted_string = aes.blocks_to_message(decrypted_blocks)
             items = decrypted_string.split(',')[:-1]
 
+            print(self.password)
             if len(raw_data) > 0 and len(items) == 0:
-                raise PermissionError('access to db denied')
+                raise PermissionError('access to db denied (1)')
+            if len(items) % 4 != 0:
+                raise PermissionError('access to db denied (2)')
 
             records = []
             row = []
